@@ -263,13 +263,18 @@ func (Dialector) clauseBuilders() map[string]clause.ClauseBuilder {
 
 			firstColumn := true
 			for idx, assignment := range onConflict.DoUpdates {
-				lookUpField := s.LookUpField(assignment.Column.Name)
-				tagSettings := lookUpField.TagSettings
-				_, isUniqueIndex := tagSettings["UNIQUEINDEX"]
-				// 'INSERT  ** ON DUPLICATE KEY UPDATE' don't allow update on primary key or unique key
-				if lookUpField.Unique || lookUpField.PrimaryKey || isUniqueIndex {
+				name := assignment.Column.Name
+				if isPrimaryOrUniqueKey(builder, name) {
 					continue
 				}
+
+				//lookUpField := s.LookUpField(assignment.Column.Name)
+				//tagSettings := lookUpField.TagSettings
+				//_, isUniqueIndex := tagSettings["UNIQUEINDEX"]
+				//// 'INSERT  ** ON DUPLICATE KEY UPDATE' don't allow update on primary key or unique key
+				//if lookUpField.Unique || lookUpField.PrimaryKey || isUniqueIndex {
+				//	continue
+				//}
 
 				if idx > 0 && !firstColumn {
 					builder.WriteByte(',')
@@ -321,4 +326,19 @@ func (Dialector) clauseBuilders() map[string]clause.ClauseBuilder {
 			}
 		},
 	}
+}
+
+func isPrimaryOrUniqueKey(builder clause.Builder, name string) bool {
+	s := builder.(*gorm.Statement).Schema
+	if s == nil || name == "" {
+		return false
+	}
+	if s.PrimaryFields != nil {
+		for _, field := range s.PrimaryFields {
+			if field.DBName == name && (field.PrimaryKey || field.Unique) {
+				return true
+			}
+		}
+	}
+	return false
 }
