@@ -264,17 +264,17 @@ func (Dialector) clauseBuilders() map[string]clause.ClauseBuilder {
 			firstColumn := true
 			for idx, assignment := range onConflict.DoUpdates {
 				name := assignment.Column.Name
-				if isPrimaryOrUniqueKey(builder, name) {
-					continue
-				}
-
-				//lookUpField := s.LookUpField(assignment.Column.Name)
-				//tagSettings := lookUpField.TagSettings
-				//_, isUniqueIndex := tagSettings["UNIQUEINDEX"]
-				//// 'INSERT  ** ON DUPLICATE KEY UPDATE' don't allow update on primary key or unique key
-				//if lookUpField.Unique || lookUpField.PrimaryKey || isUniqueIndex {
+				//if isPrimaryOrUniqueKey(builder, name) {
 				//	continue
 				//}
+
+				lookUpField := s.LookUpField(name)
+				tagSettings := lookUpField.TagSettings
+				_, isUniqueIndex := tagSettings["UNIQUEINDEX"]
+				// 'INSERT  ** ON DUPLICATE KEY UPDATE' don't allow update on primary key or unique key
+				if lookUpField.Unique || lookUpField.PrimaryKey || isUniqueIndex {
+					continue
+				}
 
 				if idx > 0 && !firstColumn {
 					builder.WriteByte(',')

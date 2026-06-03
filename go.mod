@@ -1,6 +1,6 @@
 module github.com/xmx/opengauss
 
-go 1.18.0
+go 1.25.0
 
 require (
 	gitcode.com/opengauss/openGauss-connector-go-pq v1.0.8
